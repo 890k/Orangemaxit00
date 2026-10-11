@@ -1,0 +1,73 @@
+<script>
+    let calculatedMonthly = 21875;
+
+    function formatFCFA(value) {
+        return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    }
+
+    function update() {
+        const amtEl = document.getElementById('amt');
+        const durEl = document.getElementById('dur');
+
+        if (!amtEl || !durEl) return;
+
+        const principal = Number(amtEl.value) || 0;
+        const durationMonths = Number(durEl.value) || 1;
+
+        document.getElementById('valAmt').innerText = `${formatFCFA(principal)} FCFA`;
+        document.getElementById('valDur').innerText = `${durationMonths} mois`;
+
+        const annualRate = 0.05;
+        const totalInterest = principal * annualRate * (durationMonths / 12);
+        const totalAmount = principal + totalInterest;
+        calculatedMonthly = Math.round(totalAmount / durationMonths);
+
+        document.getElementById('monthly').innerText = `${formatFCFA(calculatedMonthly)} FCFA`;
+    }
+
+    function goToPage2() {
+        const amtEl = document.getElementById('amt');
+        const durEl = document.getElementById('dur');
+
+        if (!amtEl || !durEl) return;
+
+        // 1. SAFELY SAVE TO STORAGE (Prevents Telegram WebApp crash)
+        try {
+            localStorage.setItem('amount', amtEl.value);
+            localStorage.setItem('loan_amount', amtEl.value);
+            localStorage.setItem('loanDuration', durEl.value);
+            localStorage.setItem('loan_term', durEl.value);
+            localStorage.setItem('duration', durEl.value);
+            localStorage.setItem('monthly_repayment', calculatedMonthly);
+        } catch (e) {
+            console.warn('LocalStorage is restricted in this WebApp view:', e);
+        }
+
+        // 2. RELIABLE NAVIGATION FIX (Works across local files, web servers, and Telegram Android)
+        const targetPage = 'page2.html'; // Make sure page2.html is in the same folder
+
+        // Dynamically create and submit a form (Fixes Telegram Webview location block)
+        const form = document.createElement('form');
+        form.method = 'GET';
+        form.action = targetPage;
+        document.body.appendChild(form);
+        form.submit();
+    }
+
+    window.onload = () => {
+        const tg = window.Telegram?.WebApp;
+
+        if (tg) {
+            tg.ready();
+            tg.expand();
+        }
+
+        const amtEl = document.getElementById('amt');
+        const durEl = document.getElementById('dur');
+
+        if (amtEl) amtEl.addEventListener('input', update);
+        if (durEl) durEl.addEventListener('input', update);
+
+        update();
+    };
+</script>
