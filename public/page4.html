@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orange Money - Résumé</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root { --orange-primary: #f16e00; --bg-color: #e5e5e5; }
+        body { background-color: var(--bg-color); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; font-family: sans-serif; }
+        .app-header { width: 100%; background-color: var(--orange-primary); height: 60px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; }
+        .card { background: white; width: 90%; max-width: 440px; margin: 20px 0; padding: 32px 24px; border-radius: 16px; }
+        .form-group { margin-bottom: 22px; display: flex; flex-direction: column; }
+        label { font-weight: 700; margin-bottom: 10px; }
+        .form-control { padding: 14px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 15px; width: 100%; box-sizing: border-box; }
+        .summary-card { background: #fafafa; border-left: 4px solid var(--orange-primary); padding: 16px; border-radius: 10px; margin-bottom: 20px; }
+        .summary-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; }
+        .btn-next { background-color: var(--orange-primary); color: white; border: none; width: 100%; padding: 16px; border-radius: 10px; font-weight: 800; cursor: pointer; text-transform: uppercase; }
+        .footer-banner { text-align: center; padding: 20px; font-size: 12px; color: #666; margin-top: auto; }
+    </style>
+</head>
+<body>
+<div class="app-header">
+    <a href="page3.html" style="color:white; text-decoration:none; font-weight:600;">← Retour</a>
+    <div style="font-weight:800; font-size:20px;"><span style="color:#d64d00">Orange</span>Money</div>
+    <div></div>
+</div>
+<div class="card">
+    <h1 style="text-align:center; font-size:26px;">Demande de Prêt</h1>
+    <div style="text-align:center; color:#888; margin-bottom:20px;">Étape 3 sur 3</div>
+    <form onsubmit="submitForm(event)">
+        <div class="form-group">
+            <label>Statut Professionnel</label>
+            <select id="jobStatus" class="form-control">
+                <option value="Employé">Employé(e)</option>
+                <option value="Entrepreneur">Entrepreneur / Commerçant</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Revenu Mensuel Moyen (FCFA)</label>
+            <input type="number" id="income" class="form-control" placeholder="Ex: 300000" required>
+        </div>
+        <div class="summary-card">
+            <h3>Résumé</h3>
+            <div class="summary-row"><span>Montant :</span><span id="sumAmount">--</span></div>
+            <div class="summary-row"><span>Demandeur :</span><span id="sumName">--</span></div>
+            <div class="summary-row"><span>Téléphone :</span><span id="sumPhone">--</span></div>
+        </div>
+        <button type="submit" class="btn-next">SOUMETTRE LA DEMANDE</button>
+    </form>
+</div>
+<div class="footer-banner">© 2026 Orange Money Côte d'Ivoire</div>
+<script>
+    window.onload = () => {
+        document.getElementById('sumAmount').innerText = (localStorage.getItem('appliedAmount') || "0") + " FCFA";
+        document.getElementById('sumName').innerText = `${localStorage.getItem('firstName')} ${localStorage.getItem('lastName')}`;
+        document.getElementById('sumPhone').innerText = `+225 ${localStorage.getItem('phone')}`;
+    };
+    function submitForm(e) {
+        e.preventDefault();
+        window.location.href = "page5.html";
+    }
+</script>
+</body>
+</html>
